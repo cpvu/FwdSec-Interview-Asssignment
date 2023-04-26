@@ -1,6 +1,7 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
 import formidable from "formidable";
 import fs from "fs";
+import xml2js from "xml2js";
 
 export const config = {
   api: {
@@ -30,7 +31,24 @@ export default async function handler(req, res) {
       const jsonContent = await fs.promises.readFile(swaggerFile.filepath);
       const jsonData = JSON.parse(jsonContent);
 
-      console.log(jsonData.paths);
+      const fileReadStream = fs.readFileSync(burpSuiteHistoryFile.filepath);
+
+      // Parse the XML stream into a JavaScript object
+      const parser = new xml2js.Parser();
+
+      let string = "";
+
+      parser.parseString(fileReadStream, (err, result) => {
+        if (err) {
+          console.error(err);
+          return;
+        }
+        // Convert the JavaScript object to a JSON string
+        string += JSON.stringify(result);
+      });
+
+      console.log(string);
+      console.log(JSON.parse(string));
 
       return res.status(200).json({ success: true });
     });
