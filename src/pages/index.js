@@ -23,11 +23,36 @@ export default function Home() {
     }
   }, [swaggerFileUpload, burpSuiteHistoryFileUpload]);
 
+  async function uploadFiles() {
+    console.log("Uploading files..");
+
+    let formData = new FormData();
+
+    formData.append("burpSuiteHistoryFile", burpSuiteHistoryFileUpload);
+    formData.append("swaggerFile", swaggerFileUpload);
+
+    const boundary = "---------------------------" + Date.now().toString(16);
+
+    const options = {
+      method: "POST",
+      body: formData,
+    };
+
+    try {
+      const response = await fetch("http://localhost:3000/api/upload", options);
+    } catch (e) {
+      console.log(e);
+    }
+
+    return;
+  }
+
   return (
     <main>
       <div>
         <Header></Header>
         <br></br>
+
         <label htmlFor="#upload">Upload your Swagger File:</label>
         <input
           onChange={(e) => {
@@ -50,7 +75,15 @@ export default function Home() {
 
         <br></br>
         <a href="./coverage/result">Click</a>
-        <button type="submit">Upload</button>
+
+        <button
+          onClick={() => {
+            uploadFiles();
+          }}
+          type="submit"
+        >
+          Upload
+        </button>
       </div>
     </main>
   );
