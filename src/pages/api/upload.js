@@ -58,48 +58,68 @@ async function fileXMLDataToJson(xmlFile) {
 }
 
 async function calculateCoverage(swaggerJSON, burpSuiteHistoryJSON) {
-  let hashmap = {};
-  let number = 0;
+  let swaggerEndPointHashmap = {};
+  let totalEndpoints = 0;
+  let totalTestedEndpoints = 0;
   let responseJson = {};
 
-  let swaggerEndpoints = Object.keys(swaggerJSON.paths);
+  let swaggerEndpointKeys = Object.keys(swaggerJSON.paths);
 
-  swaggerEndpoints.forEach((route) => {
+  //Initialize a swaggerEndPointHashmap with the swagger endpoints
+  swaggerEndpointKeys.forEach((route) => {
     let endPointMethods = Object.keys(swaggerJSON.paths[`${route}`]);
-    number += endPointMethods.length;
+    totalEndpoints += endPointMethods.length;
 
-    if (!hashmap[route]) {
-      hashmap[route] = endPointMethods;
+    if (!swaggerEndPointHashmap[route]) {
+      swaggerEndPointHashmap[route] = endPointMethods;
     }
   });
 
-  //console.log(hashmap);
+  console.log(responseJson);
 
+  //Iterating over the tested endpoints and matching to the swaggerEndPointHashmap of endpoints to match tested routes and methods
   burpSuiteHistoryJSON.items.item.forEach((item) => {
     let burpMethod = item.method.toString().toLowerCase();
     let burpPath = item.path.toString().substring(3);
 
-    console.log(burpPath.split("?")[0]);
-
-    for (let endpoint of swaggerEndpoints) {
+    for (let endpoint of swaggerEndpointKeys) {
       const pattern = endpoint.replace(/\{\w+\}/g, "\\w+");
+
+      //Match tested burp endpoint to untested endpoints using regex pattern and ensuring method is unique in endpoint swaggerEndPointHashmap
       if (
         new RegExp(`^${pattern}$`).test(burpPath.split("?")[0]) &&
-        hashmap[endpoint].includes(burpMethod)
+        swaggerEndPointHashmap[endpoint].includes(burpMethod)
       ) {
         console.log(
-          `Endpoint '${endpoint}' matched key '${burpPath}' with methods ${hashmap[endpoint]}`
+          `Endpoint '${endpoint}' matched key '${burpPath}' using method ${burpMethod} with methods ${swaggerEndPointHashmap[endpoint]}`
         );
 
-        hashmap[endpoint].pop(burpMethod);
+        totalTestedEndpoints += 1;
+
+        //Remove matched method from route in swaggerEndPointHashmap and add to response JSON tested endpoints
+        let methodIndex = swaggerEndPointHashmap[endpoint].indexOf(burpMethod);
+        let splicedMethod = swaggerEndPointHashmap[endpoint]
+          .splice(methodIndex, 1)
+          .toString();
+
+        if (!responseJson[endpoint]) {
+          responseJson[endpoint] = [];
+        }
+        responseJson[endpoint].push(splicedMethod);
         break;
       }
     }
   });
 
-  //console.log(hashmap);
-  //console.log(number);
-  //console.log(responseJson);
+  // Storing untested and tested endpoints into a response JSON to send back to client
+  responseJson = {
+    untestedEndpoints: swaggerEndPointHashmap,
+    testedEndpoints: responseJson,
+    totalEndpoints: totalEndpoints,
+    coverage: (totalTestedEndpoints / totalEndpoints) * 100,
+  };
+
+  return responseJson;
 }
 
 //Route request handler
@@ -113,9 +133,12 @@ export default async function handler(req, res) {
     const swaggerJSON = await fileJsonDataToJson(swaggerFile);
     const burpSuiteHistoryJSON = await fileXMLDataToJson(burpSuiteHistoryFile);
 
-    calculateCoverage(swaggerJSON, burpSuiteHistoryJSON);
+    const responseJson = await calculateCoverage(
+      swaggerJSON,
+      burpSuiteHistoryJSON
+    );
 
-    return res.status(200).json({ success: true });
+    res.status(200).json(responseJson);
   } catch (err) {
     console.log(err);
   }
