@@ -2,7 +2,20 @@
 import formidable from "formidable";
 import fs from "fs";
 import xml2js from "xml2js";
-import lodash from "lodash";
+import withJoi from "next-joi";
+import nc from "next-connect";
+import { handleFileValidate, validateJSONfile } from "@/middleware/validation";
+import { validateQuery } from "next-joi";
+
+const handler = nc({
+  onError: (err, req, res, next) => {
+    console.log(err);
+    res.status(500).end("Something broke!");
+  },
+  onNoMatch: (req, res) => {
+    res.status(404).end("Page is not found");
+  },
+});
 
 export const config = {
   api: {
@@ -75,8 +88,6 @@ async function calculateCoverage(swaggerJSON, burpSuiteHistoryJSON) {
     }
   });
 
-  console.log(responseJson);
-
   //Iterating over the tested endpoints and matching to the swaggerEndPointHashmap of endpoints to match tested routes and methods
   burpSuiteHistoryJSON.items.item.forEach((item) => {
     let burpMethod = item.method.toString().toLowerCase();
@@ -121,25 +132,28 @@ async function calculateCoverage(swaggerJSON, burpSuiteHistoryJSON) {
 
   return responseJson;
 }
-
+//validateQuery(formDataSchema)
 //Route request handler
-export default async function handler(req, res) {
+handler.post(async (req, res) => {
   // If user authentication is added, can add a check for ensure route is protected
   if (req.method != "POST") {
     return res.status(400).json({ success: "false" });
   }
-  try {
-    const [burpSuiteHistoryFile, swaggerFile] = await parseFormData(req);
-    const swaggerJSON = await fileJsonDataToJson(swaggerFile);
-    const burpSuiteHistoryJSON = await fileXMLDataToJson(burpSuiteHistoryFile);
 
-    const responseJson = await calculateCoverage(
-      swaggerJSON,
-      burpSuiteHistoryJSON
-    );
+  const [burpSuiteHistoryFile, swaggerFile] = await parseFormData(req);
 
-    res.status(200).json(responseJson);
-  } catch (err) {
-    console.log(err);
-  }
-}
+  handleFileValidate("JSON", swaggerFile);
+  handleFileValidate("XML", burpSuiteHistoryFile);
+
+  const swaggerJSON = await fileJsonDataToJson(swaggerFile);
+  const burpSuiteHistoryJSON = await fileXMLDataToJson(burpSuiteHistoryFile);
+
+  const responseJson = await calculateCoverage(
+    swaggerJSON,
+    burpSuiteHistoryJSON
+  );
+
+  res.status(200).json(responseJson);
+});
+
+export default handler;
