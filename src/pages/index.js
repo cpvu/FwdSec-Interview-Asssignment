@@ -12,23 +12,8 @@ export default function Home() {
   const router = useRouter();
 
   function handleSwaggerUpload(uploadEvent) {
-    if (validateJSON(uploadEvent)) {
-      console.log(uploadEvent.target.files[0]);
-      setSwaggerFileUpload(uploadEvent.target.files[0]);
-      return;
-    }
-    //alert("Please submit a JSON file type!");
+    setSwaggerFileUpload(uploadEvent.target.files[0]);
     return;
-  }
-
-  function validateJSON(uploadEvent) {
-    const jsonRegex = ".json$/i;";
-    console.log(uploadEvent.target.files[0].name);
-    if (new RegExp(jsonRegex).test(uploadEvent.target.files[0].name)) {
-      console.log("File is of type JSON");
-      return true;
-    }
-    return false;
   }
 
   function handleBurpSuiteHistoryUpload(uploadEvent) {
@@ -47,6 +32,8 @@ export default function Home() {
 
   async function uploadFiles() {
     console.log("Uploading files..");
+
+    if (!validateFiles()) return;
 
     let formData = new FormData();
 
@@ -73,6 +60,32 @@ export default function Home() {
     return;
   }
 
+  function validateFiles() {
+    const FILE_SIZE_LIMIT = 1000000;
+    const FILE_NAME_LIMIT = 50;
+
+    if (burpSuiteHistoryFileUpload && swaggerFileUpload) {
+      if (
+        burpSuiteHistoryFileUpload.size > FILE_SIZE_LIMIT ||
+        swaggerFileUpload > FILE_SIZE_LIMIT
+      ) {
+        alert("File size limit exceed, upload file's less than 1MB");
+        return false;
+      }
+      console.log(burpSuiteHistoryFileUpload.name.split(".xml")[0].length);
+      if (
+        burpSuiteHistoryFileUpload.name.split(".xml")[0].length >
+          FILE_NAME_LIMIT ||
+        swaggerFileUpload.name.split(".xml")[0].length > FILE_NAME_LIMIT
+      ) {
+        alert("File name length is more than 50 characters");
+        return false;
+      }
+      return true;
+    }
+    alert("Upload all required files.");
+  }
+
   return (
     <main>
       <div>
@@ -80,23 +93,22 @@ export default function Home() {
         <br></br>
         <label htmlFor="#upload">Upload your Swagger File:</label>
         <input
+          className="upload"
           type="file"
-          required
-          pattern="[*.JSON]"
-          title="The file must be JSON"
+          accept=".json"
           onChange={(e) => {
             handleSwaggerUpload(e);
           }}
-          className="upload"
         ></input>
         <br></br>
         <label>Upload your burp suite history:</label>
         <input
+          className="upload"
+          type="file"
+          accept=".xml"
           onChange={(e) => {
             handleBurpSuiteHistoryUpload(e);
           }}
-          className="upload"
-          type="file"
         ></input>
         <br></br>
         <a href="./coverage/result">Click</a>
