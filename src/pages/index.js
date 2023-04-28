@@ -3,28 +3,93 @@ import styles from "@/styles/Home.module.css";
 import { useEffect, useState } from "react";
 import { Header } from "@/components/Header";
 import { useRouter } from "next/router";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  uploadBurSuiteXMLFile,
+  uploadSwaggerJSONFile,
+} from "@/states/fileUpload/uploadedFilesSlice";
+
+import xml2js from "xml2js";
 
 export default function Home() {
-  const [swaggerFileUpload, setSwaggerFileUpload] = useState(null);
-  const [burpSuiteHistoryFileUpload, setBurpSuiteFileUpload] = useState(null);
   const [loading, setLoading] = useState(false);
   const [coverageReport, setCoverageReport] = useState(null);
-  const router = useRouter();
 
-  function handleSwaggerUpload(uploadEvent) {
-    setSwaggerFileUpload(uploadEvent.target.files[0]);
+  const router = useRouter();
+  const dispatch = useDispatch();
+  let swaggerJSON = useSelector((state) => state.uploadedFiles.swaggerJSONFile);
+  let burpSuiteXML = useSelector(
+    (state) => state.uploadedFiles.burpSuiteXMLFile
+  );
+
+  useEffect(() => {
+    console.log(swaggerJSON);
+    console.log(burpSuiteXML);
+  }, [uploadFiles]);
+
+  function convertFileToString(uploadFile) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsText(uploadFile);
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+    });
+  }
+
+  async function convertXMLFileToJson(xmlFile) {
+    const parser = new xml2js.Parser();
+    const fileString = await convertFileToString(xmlFile);
+
+    let xmlJSON = new Promise((resolve, reject) => {
+      parser.parseString(fileString, (err, result) => {
+        if (err) {
+          console.error(err);
+          reject(err);
+        }
+        // Convert the JavaScript object to a JSON string
+        resolve(JSON.parse(JSON.stringify(result)));
+      });
+    });
+
+    return xmlJSON;
+  }
+
+  function getFileInformation(dataFile) {
+    let fileData = {
+      fileName: dataFile.name,
+      fileSize: dataFile.size,
+      fileType: dataFile.type,
+    };
+    return fileData;
+  }
+
+  async function handleSwaggerUpload(uploadEvent) {
+    const file = uploadEvent.target.files[0];
+    const fileInformation = getFileInformation(file);
+
+    const jsonSwaggerFile = {
+      ...fileInformation,
+      fileData: JSON.parse(await convertFileToString(file)),
+    };
+
+    console.log(jsonSwaggerFile);
+
+    dispatch(uploadSwaggerJSONFile(jsonSwaggerFile));
     return;
   }
 
-  function handleBurpSuiteHistoryUpload(uploadEvent) {
-    setBurpSuiteFileUpload(uploadEvent.target.files[0]);
-  }
+  async function handleBurpSuiteHistoryUpload(uploadEvent) {
+    const file = uploadEvent.target.files[0];
+    const fileInformation = getFileInformation(file);
 
-  useEffect(() => {
-    if (swaggerFileUpload || burpSuiteHistoryFileUpload) {
-      console.log(swaggerFileUpload);
-    }
-  }, [swaggerFileUpload, burpSuiteHistoryFileUpload]);
+    const jsonBurpSuiteHistoryFile = {
+      ...fileInformation,
+      fileData: await convertXMLFileToJson(file),
+    };
+    dispatch(uploadBurSuiteXMLFile(jsonBurpSuiteHistoryFile));
+
+    return;
+  }
 
   useEffect(() => {
     console.log(coverageReport);
@@ -35,14 +100,24 @@ export default function Home() {
 
     if (!validateFiles()) return;
 
-    let formData = new FormData();
+    //let formData = new FormData();
 
-    formData.append("burpSuiteHistoryFile", burpSuiteHistoryFileUpload);
-    formData.append("swaggerFile", swaggerFileUpload);
+    //formData.append("burpSuiteHistoryFile", burpSuiteXML);
+    //formData.append("swaggerFile", swaggerJSON);
+
+    let requestData = {
+      swaggerJSON: swaggerJSON,
+      burpJSON: burpSuiteXML,
+    };
+
+    console.log(requestData);
 
     const options = {
       method: "POST",
-      body: formData,
+      headers: {
+        "Content-type": "application/json",
+      },
+      body: JSON.stringify(requestData),
     };
 
     try {
@@ -50,9 +125,6 @@ export default function Home() {
       const data = await response.json();
       setCoverageReport(data);
 
-      Object.keys(coverageReport).forEach((key) => {
-        console.log(key);
-      });
       //router.push("coverageReport");
     } catch (e) {
       console.log(e);
@@ -64,21 +136,20 @@ export default function Home() {
     const FILE_SIZE_LIMIT = 1000000;
     const FILE_NAME_LIMIT = 50;
 
-    if (burpSuiteHistoryFileUpload && swaggerFileUpload) {
+    if (burpSuiteXML && swaggerJSON) {
       if (
-        burpSuiteHistoryFileUpload.size > FILE_SIZE_LIMIT ||
-        swaggerFileUpload > FILE_SIZE_LIMIT
+        burpSuiteXML.fileSize > FILE_SIZE_LIMIT ||
+        swaggerJSON.fileSize > FILE_SIZE_LIMIT
       ) {
-        alert("File size limit exceed, upload file's less than 1MB");
+        alert("File size limit exceed, upload file's less than 100KB");
         return false;
       }
-      console.log(burpSuiteHistoryFileUpload.name.split(".xml")[0].length);
+
       if (
-        burpSuiteHistoryFileUpload.name.split(".xml")[0].length >
-          FILE_NAME_LIMIT ||
-        swaggerFileUpload.name.split(".xml")[0].length > FILE_NAME_LIMIT
+        burpSuiteXML.fileName.split(".xml")[0].length > FILE_NAME_LIMIT ||
+        swaggerJSON.fileName.split(".xml")[0].length > FILE_NAME_LIMIT
       ) {
-        alert("File name length is more than 50 characters");
+        alert(`File name length is more than ${FILE_NAME_LIMIT} characters`);
         return false;
       }
       return true;
