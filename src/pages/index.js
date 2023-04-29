@@ -118,7 +118,7 @@ export default function Home() {
   }
 
   //Initiate file upload API call via dispatch API thunk
-  function uploadFiles() {
+  async function uploadFiles() {
     console.log("Uploading files..");
 
     if (!validateFiles()) return;
@@ -129,6 +129,7 @@ export default function Home() {
     };
 
     dispatch(createCoverageReport(requestData));
+    router.push("./CoverageReport");
     return;
   }
 
@@ -137,7 +138,10 @@ export default function Home() {
     const FILE_SIZE_LIMIT = 1000000;
     const FILE_NAME_LIMIT = 50;
 
-    if (burpSuiteXML && swaggerJSON) {
+    if (
+      !Object.keys(burpSuiteXML).length == 0 &&
+      Object.keys(swaggerJSON).length
+    ) {
       if (
         burpSuiteXML.fileSize > FILE_SIZE_LIMIT ||
         swaggerJSON.fileSize > FILE_SIZE_LIMIT
@@ -194,53 +198,6 @@ export default function Home() {
         >
           Upload
         </button>
-        <br></br>
-        <p1>Result:</p1>
-
-        {coverageReport ? (
-          <div>
-            <table className="coverageTable">
-              <tr>
-                <th>UntestedEndPoints</th>
-                <th>Methods</th>
-              </tr>
-              {Object.keys(coverageReport.untestedEndpoints).map((endpoint) => {
-                return (
-                  <tr>
-                    <td key={endpoint}>{endpoint}</td>
-                    <td key={coverageReport.untestedEndpoints[`${endpoint}`]}>
-                      {coverageReport.untestedEndpoints[
-                        `${endpoint}`
-                      ].toString()}
-                    </td>
-                  </tr>
-                );
-              })}
-            </table>
-
-            <table className="coverageTable">
-              <tr>
-                <th>TestedEndpoints</th>
-                <th>Methods</th>
-              </tr>
-              {Object.keys(coverageReport.testedEndpoints).map((endpoint) => {
-                return (
-                  <tr>
-                    <td>{endpoint}</td>
-                    <td>
-                      {coverageReport.testedEndpoints[`${endpoint}`].toString()}
-                    </td>
-                  </tr>
-                );
-              })}
-            </table>
-
-            <p>Total Endpoints: {coverageReport.totalEndpoints}</p>
-            <p>Coverage: {coverageReport.coverage}%</p>
-          </div>
-        ) : (
-          <p></p>
-        )}
       </div>
     </main>
   );
