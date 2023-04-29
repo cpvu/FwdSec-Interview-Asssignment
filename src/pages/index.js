@@ -1,32 +1,36 @@
-import { Inter } from "next/font/google";
-import styles from "@/styles/Home.module.css";
+import "@/styles/Home.module.css";
 import { useEffect, useState } from "react";
 import { Header } from "@/components/Header";
 import { useRouter } from "next/router";
 import { useDispatch, useSelector } from "react-redux";
+import xml2js from "xml2js";
 import {
   uploadBurSuiteXMLFile,
   uploadSwaggerJSONFile,
 } from "@/states/fileUpload/uploadedFilesSlice";
 
-import xml2js from "xml2js";
-
 export default function Home() {
-  const [loading, setLoading] = useState(false);
   const [coverageReport, setCoverageReport] = useState(null);
-
   const router = useRouter();
   const dispatch = useDispatch();
+
+  useEffect(() => {
+    console.log(coverageReport);
+  }, [coverageReport]);
+
+  //Objects containing updated file data
   let swaggerJSON = useSelector((state) => state.uploadedFiles.swaggerJSONFile);
   let burpSuiteXML = useSelector(
     (state) => state.uploadedFiles.burpSuiteXMLFile
   );
 
+  //Refresh component once files have been set to states
   useEffect(() => {
     console.log(swaggerJSON);
     console.log(burpSuiteXML);
   }, [uploadFiles]);
 
+  //Convert the file contents to string for request body
   function convertFileToString(uploadFile) {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -36,6 +40,7 @@ export default function Home() {
     });
   }
 
+  //Convert XML file string to JSON
   async function convertXMLFileToJson(xmlFile) {
     const parser = new xml2js.Parser();
     const fileString = await convertFileToString(xmlFile);
@@ -54,6 +59,7 @@ export default function Home() {
     return xmlJSON;
   }
 
+  //Create new object containing information regarding the file for validation
   function getFileInformation(dataFile) {
     let fileData = {
       fileName: dataFile.name,
@@ -63,6 +69,7 @@ export default function Home() {
     return fileData;
   }
 
+  //Handle Swagger endpoint JSON file upload
   async function handleSwaggerUpload(uploadEvent) {
     const file = uploadEvent.target.files[0];
     const fileInformation = getFileInformation(file);
@@ -78,6 +85,7 @@ export default function Home() {
     return;
   }
 
+  //Handle Burp Suite XML file upload
   async function handleBurpSuiteHistoryUpload(uploadEvent) {
     const file = uploadEvent.target.files[0];
     const fileInformation = getFileInformation(file);
@@ -91,10 +99,7 @@ export default function Home() {
     return;
   }
 
-  useEffect(() => {
-    console.log(coverageReport);
-  }, [coverageReport]);
-
+  //Initiate file upload payload and API call
   async function uploadFiles() {
     console.log("Uploading files..");
 
@@ -132,6 +137,7 @@ export default function Home() {
     return;
   }
 
+  //Validate uploaded files on the client side
   function validateFiles() {
     const FILE_SIZE_LIMIT = 1000000;
     const FILE_NAME_LIMIT = 50;
@@ -161,8 +167,12 @@ export default function Home() {
     <main>
       <div>
         <Header></Header>
-        <br></br>
-        <label htmlFor="#upload">Upload your Swagger File:</label>
+        <p>
+          Upload your SwaggerJSON and Burp suite history file to get started!
+        </p>
+        <label className="fileLabel" htmlFor="#upload">
+          Upload your Swagger File:
+        </label>
         <input
           className="upload"
           type="file"
@@ -171,8 +181,7 @@ export default function Home() {
             handleSwaggerUpload(e);
           }}
         ></input>
-        <br></br>
-        <label>Upload your burp suite history:</label>
+        <label className="fileLabel">Upload your burp suite history:</label>
         <input
           className="upload"
           type="file"
@@ -181,9 +190,8 @@ export default function Home() {
             handleBurpSuiteHistoryUpload(e);
           }}
         ></input>
-        <br></br>
-        <a href="./coverage/result">Click</a>
         <button
+          className="submitUpload"
           onClick={() => {
             uploadFiles();
           }}
@@ -195,7 +203,7 @@ export default function Home() {
         <p1>Result:</p1>
         {coverageReport ? (
           <div>
-            <table>
+            <table className="coverageTable">
               <tr>
                 <th>UntestedEndPoints</th>
                 <th>Methods</th>
@@ -214,7 +222,7 @@ export default function Home() {
               })}
             </table>
 
-            <table>
+            <table className="coverageTable">
               <tr>
                 <th>TestedEndpoints</th>
                 <th>Methods</th>
@@ -235,7 +243,7 @@ export default function Home() {
             <p>Coverage: {coverageReport.coverage}%</p>
           </div>
         ) : (
-          <p>Upload files to get started</p>
+          <p></p>
         )}
       </div>
     </main>
