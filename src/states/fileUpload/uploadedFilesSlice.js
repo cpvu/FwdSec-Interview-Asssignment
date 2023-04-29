@@ -15,9 +15,13 @@ export const uploadedFilesSlice = createSlice({
     uploadBurSuiteXMLFile: (state, action) => {
       state.burpSuiteXMLFile = action.payload;
     },
+    resetFiles: (state, action) => {
+      state.burpSuiteXMLFile = initialState.burpSuiteXMLFile;
+      state.swaggerJSONFile = initialState.swaggerJSONFile;
+    },
   },
 });
 
 export default uploadedFilesSlice.reducer;
-export const { uploadSwaggerJSONFile, uploadBurSuiteXMLFile } =
+export const { uploadSwaggerJSONFile, uploadBurSuiteXMLFile, resetFiles } =
   uploadedFilesSlice.actions;
