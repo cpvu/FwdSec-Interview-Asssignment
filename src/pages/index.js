@@ -8,15 +8,14 @@ import {
   uploadBurSuiteXMLFile,
   uploadSwaggerJSONFile,
 } from "@/states/fileUpload/uploadedFilesSlice";
+import {
+  createCoverageReport,
+  setCoverageReport,
+} from "@/states/coverageReport/coverageReportSlice";
 
 export default function Home() {
-  const [coverageReport, setCoverageReport] = useState(null);
   const router = useRouter();
   const dispatch = useDispatch();
-
-  useEffect(() => {
-    console.log(coverageReport);
-  }, [coverageReport]);
 
   //Objects containing updated file data
   let swaggerJSON = useSelector((state) => state.uploadedFiles.swaggerJSONFile);
@@ -24,20 +23,32 @@ export default function Home() {
     (state) => state.uploadedFiles.burpSuiteXMLFile
   );
 
+  let coverageReport = useSelector(
+    (state) => state.coverageReport.coverageReport
+  );
+
   //Refresh component once files have been set to states
   useEffect(() => {
     console.log(swaggerJSON);
     console.log(burpSuiteXML);
+    console.log(coverageReport);
   }, [uploadFiles]);
 
   //Convert the file contents to string for request body
   function convertFileToString(uploadFile) {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsText(uploadFile);
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = reject;
-    });
+    if (!uploadFile) return;
+    try {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsText(uploadFile);
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+      });
+    } catch (error) {
+      if (error.TypeError) {
+        console.log("Upload an appropriate file!");
+      }
+    }
   }
 
   //Convert XML file string to JSON
@@ -45,41 +56,47 @@ export default function Home() {
     const parser = new xml2js.Parser();
     const fileString = await convertFileToString(xmlFile);
 
-    let xmlJSON = new Promise((resolve, reject) => {
-      parser.parseString(fileString, (err, result) => {
-        if (err) {
-          console.error(err);
-          reject(err);
-        }
-        // Convert the JavaScript object to a JSON string
-        resolve(JSON.parse(JSON.stringify(result)));
+    try {
+      let xmlJSON = new Promise((resolve, reject) => {
+        parser.parseString(fileString, (err, result) => {
+          if (err) {
+            console.error(err);
+            reject(err);
+          }
+          // Convert the JavaScript object to a JSON string
+          resolve(JSON.parse(JSON.stringify(result)));
+        });
       });
-    });
-
-    return xmlJSON;
+      return xmlJSON;
+    } catch (error) {
+      console.log(error);
+    }
   }
 
   //Create new object containing information regarding the file for validation
   function getFileInformation(dataFile) {
-    let fileData = {
-      fileName: dataFile.name,
-      fileSize: dataFile.size,
-      fileType: dataFile.type,
-    };
-    return fileData;
+    try {
+      let fileData = {
+        fileName: dataFile.name,
+        fileSize: dataFile.size,
+        fileType: dataFile.type,
+      };
+      return fileData;
+    } catch (error) {
+      console.log(error);
+    }
   }
 
   //Handle Swagger endpoint JSON file upload
   async function handleSwaggerUpload(uploadEvent) {
     const file = uploadEvent.target.files[0];
-    const fileInformation = getFileInformation(file);
+    if (!file) return;
 
+    const fileInformation = getFileInformation(file);
     const jsonSwaggerFile = {
       ...fileInformation,
       fileData: JSON.parse(await convertFileToString(file)),
     };
-
-    console.log(jsonSwaggerFile);
 
     dispatch(uploadSwaggerJSONFile(jsonSwaggerFile));
     return;
@@ -88,8 +105,9 @@ export default function Home() {
   //Handle Burp Suite XML file upload
   async function handleBurpSuiteHistoryUpload(uploadEvent) {
     const file = uploadEvent.target.files[0];
-    const fileInformation = getFileInformation(file);
+    if (!file) return;
 
+    const fileInformation = getFileInformation(file);
     const jsonBurpSuiteHistoryFile = {
       ...fileInformation,
       fileData: await convertXMLFileToJson(file),
@@ -99,41 +117,18 @@ export default function Home() {
     return;
   }
 
-  //Initiate file upload payload and API call
-  async function uploadFiles() {
+  //Initiate file upload API call via dispatch API thunk
+  function uploadFiles() {
     console.log("Uploading files..");
 
     if (!validateFiles()) return;
-
-    //let formData = new FormData();
-
-    //formData.append("burpSuiteHistoryFile", burpSuiteXML);
-    //formData.append("swaggerFile", swaggerJSON);
 
     let requestData = {
       swaggerJSON: swaggerJSON,
       burpJSON: burpSuiteXML,
     };
 
-    console.log(requestData);
-
-    const options = {
-      method: "POST",
-      headers: {
-        "Content-type": "application/json",
-      },
-      body: JSON.stringify(requestData),
-    };
-
-    try {
-      const response = await fetch("http://localhost:3000/api/upload", options);
-      const data = await response.json();
-      setCoverageReport(data);
-
-      //router.push("coverageReport");
-    } catch (e) {
-      console.log(e);
-    }
+    dispatch(createCoverageReport(requestData));
     return;
   }
 
@@ -201,6 +196,7 @@ export default function Home() {
         </button>
         <br></br>
         <p1>Result:</p1>
+
         {coverageReport ? (
           <div>
             <table className="coverageTable">
