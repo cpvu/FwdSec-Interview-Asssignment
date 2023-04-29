@@ -17,6 +17,7 @@ This NextJS application is designed to generate a coverage report for a Swagger 
     ```
     npm run build && npm run start
     ```
+5. Open http://localhost:3000 with your browser to see the result.
 
 # Uploading Files
 
