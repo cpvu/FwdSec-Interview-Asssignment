@@ -16,7 +16,6 @@ export const createCoverageReport = createAsyncThunk(
     };
 
     const response = await fetch("http://localhost:3000/api/upload", options);
-    console.log(response);
     return response.json();
   }
 );
@@ -28,6 +27,9 @@ export const coverageReportSlice = createSlice({
     setCoverageReport: (state, action) => {
       createCoverageReport(action.payload);
     },
+    resetCoverageReport: (state, action) => {
+      state.coverageReport = initialState.coverageReport;
+    },
   },
   extraReducers: (builder) => {
     // Add reducers for additional action types here, and handle loading state as needed
@@ -38,4 +40,5 @@ export const coverageReportSlice = createSlice({
 });
 
 export default coverageReportSlice.reducer;
-export const { setCoverageReport } = coverageReportSlice.actions;
+export const { setCoverageReport, resetCoverageReport } =
+  coverageReportSlice.actions;
