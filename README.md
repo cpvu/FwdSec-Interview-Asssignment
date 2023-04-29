@@ -1,38 +1,48 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Swagger Coverage Report
+This NextJS application is designed to generate a coverage report for a Swagger file and Burp Suite history file. The report will show the percentage of endpoints covered in the Swagger file based on the requests in the Burp Suite history.
 
-## Getting Started
+# Getting Started
 
-First, run the development server:
+1. Clone this github repository.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-```
+2. Install package dependencies
+    ```
+    npm install
+    ```
+3. Run the development server 
+    ```
+    npm run dev
+    ```
+4. Run the production build
+    ```
+    npm run build && npm run start
+    ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+# Uploading Files
 
-You can start editing the page by modifying `pages/index.js`. The page auto-updates as you edit the file.
+A swagger JSON file is required. Select your swagger file under the swagger file upload.
 
-[API routes](https://nextjs.org/docs/api-routes/introduction) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.js`.
+A burp suite history XML file is required. Select your burp suite history file under the burp suite history upload.
 
-The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/api-routes/introduction) instead of React pages.
+## File Restrictions:
+    - Less than 500kb
+    - Respective file types must be application/json and text/xml
+    - File name less than 50 characters
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+# Viewing the Report
+Once files are uploaded, click on the upload button.
 
-## Learn More
+A report will be generated showing two tables; untested endpoints and tested endpoints. There are two columns, routes for the endpoint route and method for the request method.
 
-To learn more about Next.js, take a look at the following resources:
+<b>Untested endpoints:</b> includes end points that have not been tested.
+<b>Tested endpoints:</b> includes endpoints that have been tested.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+The coverage is calculated using these two tables, providing a percentage of coverage of the swagger endpoints that the burp suite history file has tested.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+# Technologies Used
+This application built using NextJS and React Redux. As a smaller scale application, it utilizes NextJS's server-side processing and file handling via its API routes features.
 
-## Deploy on Vercel
+React Redux allows for ease of managing application states of the files that are uploaded.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+##Contributors
+This app was created by Calvin Vu for Forward Security.
