@@ -1,11 +1,6 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
-import formidable from "formidable";
-import fs from "fs";
-import xml2js from "xml2js";
-import withJoi from "next-joi";
 import nc from "next-connect";
 import { handleFileValidate, validateJSONfile } from "@/middleware/validation";
-import { validateQuery } from "next-joi";
 
 const handler = nc({
   onError: (err, req, res, next) => {
@@ -17,6 +12,7 @@ const handler = nc({
   },
 });
 
+//Calculate coverage of untested and tested endpoints
 async function calculateCoverage(swaggerJSON, burpSuiteHistoryJSON) {
   let swaggerEndPointHashmap = {};
   let totalEndpoints = 0;
