@@ -26,19 +26,6 @@
   margin-bottom: 20px;
 }
 
-.submit-upload {
-  display: block;
-  margin: 0 auto;
-  padding: 10px 20px;
-  border: none;
-  border-radius: 4px;
-  background: #ff7f50;
-  color: #ffffff;
-  font-size: 16px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
 .submit-upload:hover {
   background-color: #ffffff;
   color: #ff7f50;
