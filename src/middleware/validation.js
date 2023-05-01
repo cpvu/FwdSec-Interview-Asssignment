@@ -24,7 +24,7 @@ export const handleFileValidate = (fileType, fileData) => {
   }
 
   if (error.error) {
-    throw new Error(error.error);
+    throw new Error(error.error.message);
   }
 
   return;
