@@ -66,10 +66,17 @@ export default function Home() {
       burpJSON: burpSuiteXML,
     };
 
-
     dispatch(createCoverageReport(requestData))
-
+      .unwrap()
+      .then((data) => {
+        router.push("/CoverageReport");
+      })
+      .catch((error) => {
+        // Handle error
+        router.push('/_error')
+      });
       router.push("/CoverageReport");
+      
     return;
   }
 
