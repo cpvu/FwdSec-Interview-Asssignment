@@ -14,15 +14,18 @@ export const validateXMLfile = Joi.object({
   fileData: Joi.object().required(),
 });
 
+//Handle file validation
 export const handleFileValidate = (fileType, fileData) => {
   let error;
 
+  //Check file type to be validated
   if (fileType == "XML") {
     error = validateXMLfile.validate(fileData);
   } else if (fileType == "JSON") {
     error = validateJSONfile.validate(fileData);
   }
 
+  //If an error body is returned, throw an error.
   if (error.error) {
     throw new Error(error.error.message);
   }

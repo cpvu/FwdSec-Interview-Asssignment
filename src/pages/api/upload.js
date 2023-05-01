@@ -2,6 +2,7 @@
 import nc from "next-connect";
 import { handleFileValidate, validateJSONfile } from "@/middleware/validation";
 import { calculateCoverage } from "./_utils/calculateCoverage";
+import { JSON, XML } from "@/constants/constants";
 
 const handler = nc({
   onError: (err, req, res, next) => {
@@ -17,8 +18,9 @@ handler.post(async (req, res) => {
   const burpSuiteHistoryJSON = req.body.burpJSON;
   const swaggerJSON = req.body.swaggerJSON;
 
-  handleFileValidate("JSON", swaggerJSON);
-  handleFileValidate("XML", burpSuiteHistoryJSON);
+  //Server side file validation using JOI
+  handleFileValidate(JSON, swaggerJSON);
+  handleFileValidate(XML, burpSuiteHistoryJSON);
 
   const responseJson = await calculateCoverage(
     swaggerJSON.fileData,

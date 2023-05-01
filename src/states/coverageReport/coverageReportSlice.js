@@ -4,6 +4,7 @@ const initialState = {
   coverageReport: null,
 };
 
+//Initiates a POST request to create the coverage report
 export const createCoverageReport = createAsyncThunk(
   "user/createCoverageReport",
   async (requestPayload, thunkAPI) => {
