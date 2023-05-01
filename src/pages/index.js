@@ -1,17 +1,18 @@
 import "@/styles/Home.module.css";
-import { useEffect, useState } from "react";
 import { Header } from "@/components/Header";
 import { useRouter } from "next/router";
 import { useDispatch, useSelector } from "react-redux";
-import xml2js from "xml2js";
+import { FILE_SIZE_LIMIT, FILE_NAME_LIMIT } from "@/constants/constants";
+import { createCoverageReport } from "@/states/coverageReport/coverageReportSlice";
+import {
+  convertFileToString,
+  convertXMLFileToJson,
+  getFileInformation,
+} from "@/utils/fileUtils";
 import {
   uploadBurSuiteXMLFile,
   uploadSwaggerJSONFile,
 } from "@/states/fileUpload/uploadedFilesSlice";
-import {
-  createCoverageReport,
-  setCoverageReport,
-} from "@/states/coverageReport/coverageReportSlice";
 
 export default function Home() {
   const router = useRouter();
@@ -22,70 +23,6 @@ export default function Home() {
   let burpSuiteXML = useSelector(
     (state) => state.uploadedFiles.burpSuiteXMLFile
   );
-
-  let coverageReport = useSelector(
-    (state) => state.coverageReport.coverageReport
-  );
-
-  //Refresh component once files have been set to states
-  useEffect(() => {
-    console.log(swaggerJSON);
-    console.log(burpSuiteXML);
-    console.log(coverageReport);
-  }, [uploadFiles]);
-
-  //Convert the file contents to string for request body
-  function convertFileToString(uploadFile) {
-    if (!uploadFile) return;
-    try {
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsText(uploadFile);
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = reject;
-      });
-    } catch (error) {
-      if (error.TypeError) {
-        console.log("Upload an appropriate file!");
-      }
-    }
-  }
-
-  //Convert XML file string to JSON
-  async function convertXMLFileToJson(xmlFile) {
-    const parser = new xml2js.Parser();
-    const fileString = await convertFileToString(xmlFile);
-
-    try {
-      let xmlJSON = new Promise((resolve, reject) => {
-        parser.parseString(fileString, (err, result) => {
-          if (err) {
-            console.error(err);
-            reject(err);
-          }
-          // Convert the JavaScript object to a JSON string
-          resolve(JSON.parse(JSON.stringify(result)));
-        });
-      });
-      return xmlJSON;
-    } catch (error) {
-      console.log(error);
-    }
-  }
-
-  //Create new object containing information regarding the file for validation
-  function getFileInformation(dataFile) {
-    try {
-      let fileData = {
-        fileName: dataFile.name,
-        fileSize: dataFile.size,
-        fileType: dataFile.type,
-      };
-      return fileData;
-    } catch (error) {
-      console.log(error);
-    }
-  }
 
   //Handle Swagger endpoint JSON file upload
   async function handleSwaggerUpload(uploadEvent) {
@@ -127,17 +64,18 @@ export default function Home() {
       swaggerJSON: swaggerJSON,
       burpJSON: burpSuiteXML,
     };
+    try {
+      let data = dispatch(createCoverageReport(requestData));
+    } catch (e) {
+      console.log(e);
+    }
 
-    dispatch(createCoverageReport(requestData));
-    router.push("./CoverageReport");
+    router.push("/CoverageReport");
     return;
   }
 
   //Validate uploaded files on the client side
   function validateFiles() {
-    const FILE_SIZE_LIMIT = 1000000;
-    const FILE_NAME_LIMIT = 50;
-
     if (
       !Object.keys(burpSuiteXML).length == 0 &&
       Object.keys(swaggerJSON).length
@@ -165,9 +103,9 @@ export default function Home() {
   return (
     <main>
       <div>
-        <Header></Header>
+        <Header title="Forward Security Interview Assignment"></Header>
         <p>
-          Upload your SwaggerJSON and Burp suite history file to get started!
+          Upload your SwaggerJSON and Burp Suite history file to get started!
         </p>
         <label className="fileLabel" htmlFor="#upload">
           Upload your Swagger File:
@@ -180,7 +118,7 @@ export default function Home() {
             handleSwaggerUpload(e);
           }}
         ></input>
-        <label className="fileLabel">Upload your burp suite history:</label>
+        <label className="fileLabel">Upload your Burp Suite history:</label>
         <input
           className="upload"
           type="file"
