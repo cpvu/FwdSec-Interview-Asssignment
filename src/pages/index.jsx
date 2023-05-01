@@ -1,5 +1,5 @@
 import "@/styles/Home.module.css";
-import { Header } from "@/components/Header";
+import { Header } from "@/components/Header.jsx";
 import { useRouter } from "next/router";
 import { useDispatch, useSelector } from "react-redux";
 import { FILE_SIZE_LIMIT, FILE_NAME_LIMIT } from "@/constants/constants";
@@ -13,6 +13,7 @@ import {
   uploadBurSuiteXMLFile,
   uploadSwaggerJSONFile,
 } from "@/states/fileUpload/uploadedFilesSlice";
+import Error from "./_error";
 
 export default function Home() {
   const router = useRouter();
@@ -64,13 +65,11 @@ export default function Home() {
       swaggerJSON: swaggerJSON,
       burpJSON: burpSuiteXML,
     };
-    try {
-      let data = dispatch(createCoverageReport(requestData));
-    } catch (e) {
-      console.log(e);
-    }
 
-    router.push("/CoverageReport");
+
+    dispatch(createCoverageReport(requestData))
+
+      router.push("/CoverageReport");
     return;
   }
 
@@ -101,11 +100,10 @@ export default function Home() {
   }
 
   return (
-    <main>
       <div>
         <Header title="Forward Security Interview Assignment"></Header>
         <p>
-          Upload your SwaggerJSON and Burp Suite history file to get started!
+          Upload a Swagger Endpoint JSON file and Burp Suite history file to get started!
         </p>
         <label className="fileLabel" htmlFor="#upload">
           Upload your Swagger File:
@@ -137,6 +135,6 @@ export default function Home() {
           Upload
         </button>
       </div>
-    </main>
+
   );
 }
