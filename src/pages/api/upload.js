@@ -4,6 +4,14 @@ import { handleFileValidate, validateJSONfile } from "@/middleware/validation";
 import { calculateCoverage } from "./_utils/calculateCoverage";
 import { JSON, XML } from "@/constants/constants";
 
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: "500kb",
+    },
+  },
+};
+
 const handler = nc({
   onError: (err, req, res, next) => {
     res.status(500).end("Something went wrong");
