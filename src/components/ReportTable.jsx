@@ -1,5 +1,4 @@
 export const ReportTable = (props) => {
-
   return (
     <table className="coverageTable">
     <tbody>
