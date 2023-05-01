@@ -1,11 +1,9 @@
 import styles from "src/styles/Header.module.css";
 
-export const Header = () => {
+export const Header = (props) => {
   return (
     <div>
-      <header className={styles.mainHeader}>
-        Forward Security Interview Assignment by Calvin Vu
-      </header>
+      <header className={styles.mainHeader}>{props.title}</header>
     </div>
   );
 };
